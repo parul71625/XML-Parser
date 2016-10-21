@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>Homework 4</title>
+</head>
+<body>
+<script type="text/javascript">
+
+function loadXML(url) {
+	//Empty XML URL
+	if (!/\S/.test(url)) {
+		url="";    //If URL contains inly whitespaces
+	}
+		
+	if (url) {
+		var xmlhttp = new XMLHttpRequest();	
+		xmlhttp.open("GET",url,false);	
+		
+		try {
+			xmlhttp.send(null);
+		} catch(e) {
+			//alert("XML file not found")
+		}
+		
+		//XML File Does Not Exist
+		if (xmlhttp.status === 200) {
+			var xmlData = xmlhttp.responseXML;	
+			
+			var xmlString = xmlhttp.responseText;	
+			var parserError = parseXml(xmlString);
+			
+			var table="";
+			var header="";
+			var data = {};
+			for (var i = 0; i < 5; i++) {
+				data[i] = "";
+			}
+			
+			//XML File contains error
+			if (!parserError) {
+				
+				table = xmlData.getElementsByTagName("Table");
+				//If Table tag is not empty
+				if (table.length > 0) {
+					header = table[0].getElementsByTagName("Header");
+					if (header.length > 0) {
+						var dataLen = header[0].getElementsByTagName("Data");
+						if (dataLen.length > 0) {
+							for (var i = 0; i < dataLen.length; i++) {
+								if (dataLen[i].firstChild != null) {
+									data[i] = dataLen[i].firstChild.data;
+								}
+							}
+						} 					
+					}
+				
+					var rows = table[0].getElementsByTagName("Row");
+					
+					//If no Newspapers List exist
+					if (rows.length > 0) {
+						var tableStr = "<title>Online Newspaper Listings</title><table border='1px'>";
+						tableStr+= "<tr>";
+						tableStr+= "<th>"+data[0]+"</th>";
+						tableStr+= "<th>"+data[1]+"</th>";
+						tableStr+= "<th>"+data[2]+"</th>";
+						tableStr+= "<th>"+data[3]+"</th>";
+						tableStr+= "<th>"+data[4]+"</th>";
+						tableStr+= "</tr>";
+						
+						
+						for (var i = 0; i < rows.length; i++) {   	
+							var slot, newspaper, location, homepage, logo;
+							slot = newspaper = location = homepage = logo = "";
+														
+							slot = rows[i].getElementsByTagName("Slot")[0].firstChild;
+							if( slot != null ) {
+								slot = rows[i].getElementsByTagName("Slot")[0].firstChild.data;
+							} else {
+								slot = "";
+							}
+							
+							newspaper = rows[i].getElementsByTagName("Newspaper")[0].firstChild;
+							if( newspaper != null ) {
+								newspaper = rows[i].getElementsByTagName("Newspaper")[0].firstChild.data;
+							} else {
+								newspaper = "";
+							}
+							
+							location = rows[i].getElementsByTagName("Location");
+							
+							homepage = rows[i].getElementsByTagName("HomePage")[0].firstChild;
+							if( homepage != null ) {
+								homepage = rows[i].getElementsByTagName("HomePage")[0].firstChild.data;
+							} else {
+								homepage = "";
+							}
+							
+							logo = rows[i].getElementsByTagName("Logo")[0].firstChild;
+							if( logo != null ) {
+								logo = rows[i].getElementsByTagName("Logo")[0].firstChild.data;
+								if (!/\S/.test(logo)) {
+									logo="";
+								}
+							} else {
+								logo = "";
+							}
+							
+							
+							//For subtags under Location tag
+							var city = "";
+							var state = "";
+							var locStr = "";
+							for(var loc = 0; loc < location.length; loc++) {
+								if (location[0].getElementsByTagName("City").length > 0) {									
+									if (location[0].getElementsByTagName("City")[0].firstChild != null) {
+										city = location[0].getElementsByTagName("City")[0].firstChild.data;
+									}
+									
+									if (!/\S/.test(city) || city=="") {
+										city="N.A.";
+									}
+								}
+								else 
+								{
+									city = "null";
+								}
+								if (location[0].getElementsByTagName("State").length > 0) {
+									if (location[0].getElementsByTagName("State")[0].firstChild != null) {
+										state = location[0].getElementsByTagName("State")[0].firstChild.data;
+									}
+									
+									if (!/\S/.test(state) || state=="") {
+										state="N.A.";
+									}
+								}
+								else 
+								{
+									state = "null";
+								}
+															
+								
+								if(city=="null" && state=="null")
+								{
+									locStr="";
+								}
+								else if(city=="null")
+								{
+									locStr = "<ul><li>"+state+"</li></ul>"
+								}
+								else if(state=="null")
+								{
+									locStr = "<ul><li>"+city+"</li></ul>"
+								}
+								else
+								{
+									locStr = "<ul><li>"+city+"</li><li>"+state+"</li></ul>"		
+								}
+								
+								/*
+								if (city && state && city!="null" && state!="null")
+									locStr = "<ul><li>"+city+"</li><li>"+state+"</li></ul>"									
+								if (city!=null && city==null)
+									locStr = "<ul><li>"+city+"</li></ul>"
+								if (city==null && state!=null)
+									locStr = "<ul><li>"+state+"</li></ul>"
+									*/
+							}
+							
+							tableStr+= "<tr style='height:150px;'>";
+							tableStr+= "<td>"+slot+"</td>";
+							tableStr+= "<td>"+newspaper+"</td>";
+							tableStr+= "<td>"+locStr+"</td>";
+							tableStr+= "<td><a href='"+homepage+"'>"+homepage+"</a></td>";
+							if (logo != "") {
+								tableStr+= "<td><img src='"+logo+"' style='display:block; width:200px; height:150px;'></td>";
+							} else {
+								tableStr+= "<td>"+logo+"</td>";
+							}
+							tableStr+= "</tr>";
+						}
+						
+						tableStr+="</table>";
+						
+						
+						popup = window.open('', '_blank', 'width=950, height=600, top=50, left=260, resizeable, scrollbars');
+						popup.document.write(tableStr);
+						popup.document.close();
+					} else {
+						alert("No Newspapers in XML file");
+					}
+				}
+			
+			} else {
+				alert("Error in XML Document");
+			}	
+		} else {
+			alert("XML document does not exist");
+		}
+	} else {
+		alert("Invalid Input! Please enter XML URL");
+	}
+	
+}
+
+function parseXml(xmlString) {
+	var xmlParser = new DOMParser()
+    var xmlDocument = xmlParser.parseFromString(xmlString, 'text/xml');
+	
+	if(isParseError(xmlDocument)) {
+		//alert('Error parsing XML');
+		return 1;
+    } else {
+		return 0;
+	}
+}
+
+function isParseError(parsedDocument) {
+   var parser = new DOMParser(),
+        errorneousParse = parser.parseFromString('<', 'text/xml'),
+        parsererrorNS = errorneousParse.getElementsByTagName("parsererror")[0].namespaceURI;
+    if (parsererrorNS === 'http://www.w3.org/1999/xhtml') {
+        return parsedDocument.getElementsByTagName("parsererror").length > 0;
+    }
+    return parsedDocument.getElementsByTagNameNS(parsererrorNS, 'parsererror').length > 0;
+};
+
+</script>
+
+
+<center>
+	<br><br><br><br><br><br>
+	<h1>Enter URL for Newspaper List XML File</h1>
+
+	<input type="text" id="URL"><br><br>
+	<button onclick="loadXML(document.getElementById('URL').value)" style="border-radius : 5px; border-style: solid;">Submit Query</button>
+</center>
+
+</body><noscript>
+</html>
